@@ -1,9 +1,8 @@
-package com.xindun.sdk.ias.utils;
+package com.example.json;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -195,9 +194,19 @@ public class JsonCreatorWithoutLib {
     //getDeclaredFields只能获取到当前Bean（不含父类）所有的成员变量（包括private），因此递归去获取父类的
     //注：亲测Gson也是这个递归顺序
     private Field[] traverseFields(Class clazz) {
+        //可能父类子类有重复的字段，因为子类需要覆盖父类的，所以需要跳过重复的，同时又要保持顺序，所以用LinkedHashSet
         LinkedList<Field> fieldList = new LinkedList<>();
         while (clazz != Object.class) {
-            Collections.addAll(fieldList, clazz.getDeclaredFields());
+            Field[] tempFields = clazz.getDeclaredFields();
+            flag:
+            for (Field field : tempFields) {
+                //与已有Field依次对比，如果name相同则跳过
+                for (Field existField : fieldList)
+                    if (field.getName().equals(existField.getName())) {
+                        continue flag;
+                    }
+                fieldList.add(field);
+            }
             clazz = clazz.getSuperclass();
         }
         return fieldList.toArray(new Field[1]);
